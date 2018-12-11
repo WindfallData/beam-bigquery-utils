@@ -9,7 +9,7 @@
   <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>Apache Beam BIgQuery Utils</name>
+  <name>Apache Beam BigQuery Utils</name>
   <description>Collection of utilities for working with BigQuery in Apache Beam</description>
   <url>https://github.com/WindfallData/beam-bigquery-annotations</url>
 
