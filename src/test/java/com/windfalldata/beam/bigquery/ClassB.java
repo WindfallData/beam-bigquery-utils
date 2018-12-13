@@ -1,5 +1,8 @@
 package com.windfalldata.beam.bigquery;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +15,7 @@ class ClassB {
   }
 
   @BigQueryColumn
-  private List<ClassA> ass;
+  private List<ClassA> aList;
 
   @BigQueryColumn(name = "yep")
   private boolean verdad;
@@ -29,12 +32,12 @@ class ClassB {
   @BigQueryColumn
   private LocalDate myDate;
 
-  List<ClassA> getAss() {
-    return ass;
+  List<ClassA> getAList() {
+    return aList;
   }
 
-  ClassB setAss(List<ClassA> ass) {
-    this.ass = ass;
+  ClassB setAList(List<ClassA> aList) {
+    this.aList = aList;
     return this;
   }
 
@@ -81,5 +84,35 @@ class ClassB {
   public ClassB setMyDate(LocalDate myDate) {
     this.myDate = myDate;
     return this;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) { return true; }
+
+    if (o == null || getClass() != o.getClass()) { return false; }
+
+    ClassB classB = (ClassB) o;
+
+    return new EqualsBuilder()
+            .append(verdad, classB.verdad)
+            .append(aList, classB.aList)
+            .append(dollars, classB.dollars)
+            .append(map, classB.map)
+            .append(order, classB.order)
+            .append(myDate, classB.myDate)
+            .isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37)
+            .append(aList)
+            .append(verdad)
+            .append(dollars)
+            .append(map)
+            .append(order)
+            .append(myDate)
+            .toHashCode();
   }
 }

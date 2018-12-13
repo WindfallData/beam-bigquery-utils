@@ -42,7 +42,7 @@ class BigQueryTableObjectConverterTest {
     ArrayList<RecordFieldMeta> meta = converter.getMetaForClass(ClassB.class);
 
     assertEquals(meta.size(), 6);
-    assertTrue(meta.stream().anyMatch(m -> "ass".equals(m.name)));
+    assertTrue(meta.stream().anyMatch(m -> "aList".equals(m.name)));
     assertTrue(meta.stream().anyMatch(m -> "yep".equals(m.name)));
     assertTrue(meta.stream().anyMatch(m -> "dollars".equals(m.name)));
     assertTrue(meta.stream().anyMatch(m -> "map".equals(m.name)));
@@ -87,7 +87,7 @@ class BigQueryTableObjectConverterTest {
 
     ImmutableMap<String, Object> map = ImmutableMap.of("hey", "sup");
     ClassB b = new ClassB()
-            .setAss(newArrayList(a1, a2))
+            .setAList(newArrayList(a1, a2))
             .setVerdad(false)
             .setDollars("1234.56")
             .setMap(map)
@@ -101,7 +101,7 @@ class BigQueryTableObjectConverterTest {
             .set("dollars", 1234.56)
             .set("map", new Gson().toJson(map))
             .set("order", "TWO")
-            .set("ass", newArrayList(
+            .set("aList", newArrayList(
                     new TableRow().set("foo", "abc").set("myInt", 42),
                     new TableRow().set("foo", null).set("myInt", -1)
             ))

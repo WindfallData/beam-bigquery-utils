@@ -1,5 +1,8 @@
 package com.windfalldata.beam.bigquery;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 @SuppressWarnings("unused")
 class ClassA {
 
@@ -34,5 +37,29 @@ class ClassA {
   ClassA setXxx(int xxx) {
     this.xxx = xxx;
     return this;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) { return true; }
+
+    if (o == null || getClass() != o.getClass()) { return false; }
+
+    ClassA classA = (ClassA) o;
+
+    return new EqualsBuilder()
+            .append(xxx, classA.xxx)
+            .append(foo, classA.foo)
+            .append(bar, classA.bar)
+            .isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37)
+            .append(foo)
+            .append(bar)
+            .append(xxx)
+            .toHashCode();
   }
 }

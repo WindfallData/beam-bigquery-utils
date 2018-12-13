@@ -38,7 +38,7 @@ class BigQueryTableTest {
   void testGetRecordFieldMetaListForNestedType() {
     List<TableFieldSchema> list = schema(ClassB.class);
     assertEquals(list, newArrayList(
-            new TableFieldSchema().setName("ass").setType("RECORD").setMode("REPEATED").setFields(
+            new TableFieldSchema().setName("aList").setType("RECORD").setMode("REPEATED").setFields(
                     newArrayList(
                             new TableFieldSchema().setName("foo").setType("STRING"),
                             new TableFieldSchema().setName("myInt").setType("INTEGER").setMode("REQUIRED"))),
