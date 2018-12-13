@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
-import static com.windfalldata.beam.bigquery.BigQueryTable.getRecordFieldMetaListForType;
+import static com.windfalldata.beam.bigquery.BigQueryTable.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BigQueryTableTest {
@@ -21,7 +21,7 @@ class BigQueryTableTest {
     List<TableFieldSchema> list = schema(ClassA.class);
     assertEquals(list, newArrayList(
             new TableFieldSchema().setName("foo").setType("STRING"),
-            new TableFieldSchema().setName("myInt").setType("INTEGER").setMode("REQUIRED")));
+            new TableFieldSchema().setName("myInt").setType("INTEGER").setMode(MODE_REQUIRED)));
   }
 
   @Test
@@ -31,17 +31,17 @@ class BigQueryTableTest {
     Set<TableFieldSchema> set = newHashSet(schema(ClassAPrime.class));
     assertEquals(set, newHashSet(
             new TableFieldSchema().setName("foo").setType("STRING"),
-            new TableFieldSchema().setName("myInt").setType("INTEGER").setMode("REQUIRED")));
+            new TableFieldSchema().setName("myInt").setType("INTEGER").setMode(MODE_REQUIRED)));
   }
 
   @Test
   void testGetRecordFieldMetaListForNestedType() {
     List<TableFieldSchema> list = schema(ClassB.class);
     assertEquals(list, newArrayList(
-            new TableFieldSchema().setName("aList").setType("RECORD").setMode("REPEATED").setFields(
+            new TableFieldSchema().setName("aList").setType("RECORD").setMode(MODE_REPEATED).setFields(
                     newArrayList(
                             new TableFieldSchema().setName("foo").setType("STRING"),
-                            new TableFieldSchema().setName("myInt").setType("INTEGER").setMode("REQUIRED"))),
+                            new TableFieldSchema().setName("myInt").setType("INTEGER").setMode(MODE_REQUIRED))),
             new TableFieldSchema().setName("yep").setType("BOOLEAN"),
             new TableFieldSchema().setName("dollars").setType("FLOAT"),
             new TableFieldSchema().setName("map").setType("STRING"),
@@ -56,11 +56,11 @@ class BigQueryTableTest {
     TableFieldSchema tfsString = schema.stream().filter(s -> s.getName().equals("theStrings")).findFirst().orElseThrow(RuntimeException::new);
     TableFieldSchema tfsInteger = schema.stream().filter(s -> s.getName().equals("theIntegers")).findFirst().orElseThrow(RuntimeException::new);
     assertAll(
-        () -> assertEquals(BigQueryTable.MODE_REPEATED, tfsString.getMode()),
+        () -> assertEquals(MODE_REPEATED, tfsString.getMode()),
         () -> assertEquals("theStrings", tfsString.getName()),
         () -> assertEquals(FieldType.STRING.getTypeName(), tfsString.getType()),
         () -> assertNull(tfsString.getFields()),
-        () -> assertEquals(BigQueryTable.MODE_REPEATED, tfsInteger.getMode()),
+        () -> assertEquals(MODE_REPEATED, tfsInteger.getMode()),
         () -> assertEquals("theIntegers", tfsInteger.getName()),
         () -> assertEquals(FieldType.INTEGER.getTypeName(), tfsInteger.getType()),
         () -> assertNull(tfsInteger.getFields())
@@ -73,7 +73,7 @@ class BigQueryTableTest {
     List<TableFieldSchema> schema = schema(ClassWithSimpleRepeatedConvertedType.class);
     TableFieldSchema element = Iterables.getOnlyElement(schema);
     assertAll(
-        () -> assertEquals( BigQueryTable.MODE_REPEATED, element.getMode()),
+        () -> assertEquals( MODE_REPEATED, element.getMode()),
         () -> assertEquals( "stringList", element.getName()),
         () -> assertEquals( FieldType.INTEGER.getTypeName(), element.getType()),
         () -> assertNull(element.getFields())

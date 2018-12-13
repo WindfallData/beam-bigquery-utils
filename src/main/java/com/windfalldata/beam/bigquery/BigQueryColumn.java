@@ -5,6 +5,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Specifies that fields or method with this annotation should be added to the BigQuery schema for the object
+ * in which they are contained.
+ *
+ * @see BigQueryIOWriterTransform
+ */
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface BigQueryColumn {

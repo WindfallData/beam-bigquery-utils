@@ -7,7 +7,6 @@ import com.windfalldata.beam.bigquery.BigQueryColumnValueExtractor.ExtractionFun
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -24,32 +23,36 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class BigQueryTable<T> {
 
-  private static final String MODE_REQUIRED = "REQUIRED";
-  @VisibleForTesting
-  static final String MODE_REPEATED = "REPEATED";
+  @VisibleForTesting static final String MODE_REQUIRED = "REQUIRED";
+  @VisibleForTesting static final String MODE_REPEATED = "REPEATED";
 
   /**
-   * Prints to STDOUT the JSON schema of the provided class type.  Can be useful for debugging sometimes.
+   * Generates a {@link TableSchema} for the provided Class.
+   * <p/>
+   * The class should be annotated with one ore more {@link BigQueryColumn} annotations which will be used as
+   * the columns in the schema for the table.
+   * <p/>
+   * <em>NOTE:</em> it is an error to serialize an object (including nested objects within collections) that are
+   * not annotated with at least one {@code BigQueryColumn}.
+   *
+   * @see BigQueryColumn
+   * @see BigQueryIOWriterTransform
    */
   @SuppressWarnings("unused")
-  public static <T> void dumpSchemaOfClass(Class<T> clazz) {
-    try {
-      System.out.println(new BigQueryTable<>(clazz).inferSchema().toPrettyString());
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  public static <T> TableSchema getSchemaForClass(Class<T> clazz) {
+    return new BigQueryTable<>(clazz).inferSchema();
   }
 
   private final Class<T> type;
 
-  BigQueryTable(Class<T> type) {
+  private BigQueryTable(Class<T> type) {
     this.type = type;
   }
 
   /**
    * Infers the TableSchema of the Class type, including parameterized collections.
    */
-  TableSchema inferSchema() {
+  private TableSchema inferSchema() {
     final TableSchema schema = new TableSchema();
     List<TableFieldSchema> fields = getRecordFieldMetaListForType(type).stream()
                                                                        .map(RecordFieldMeta::asTableFieldSchema)
@@ -100,7 +103,7 @@ public class BigQueryTable<T> {
     meta.description = column.description();
     if (column.required()) {
       if (column.stripToNull()) {
-        throw new IllegalArgumentException("Column cannot be marked as required and also stripToNull = true");
+        throw new IllegalArgumentException("Column cannot be marked as required and also \"stripToNull\" = true");
       }
       meta.mode = MODE_REQUIRED;
     }

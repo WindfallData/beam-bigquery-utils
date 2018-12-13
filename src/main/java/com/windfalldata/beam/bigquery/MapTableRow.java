@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.google.api.services.bigquery.model.TableRow;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
@@ -17,18 +18,36 @@ import java.io.IOException;
 
 import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES;
 
+/**
+ * Transformation that maps BigQuery {@link TableRow} objects into objects of the specified target type.
+ * <p/>
+ * Example usage:
+ * <pre>
+ * Pipeline p = Pipeline.create(options);
+ *
+ * String bqQuery = ...;
+ * PCollection&lt;MyObject> mappedObjects = p.apply(BigQueryIO.read().fromQuery(bqQuery))
+ *                                        .apply(new MapTableRow&lt;MyObject>(MyObject.class) {});
+ * </pre>
+ * @param <T> the target type of the transformation
+ */
 public class MapTableRow<T> extends PTransform<PCollection<TableRow>, PCollection<T>> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MapTableRow.class);
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModule(new ParameterNamesModule())
-                                                                      .registerModule(new Jdk8Module())
-                                                                      .registerModule(new JavaTimeModule())
-                                                                      .configure(ACCEPT_CASE_INSENSITIVE_PROPERTIES,
-                                                                                 true);
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+          .registerModule(new ParameterNamesModule())
+          .registerModule(new Jdk8Module())
+          .registerModule(new JavaTimeModule())
+          .configure(ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
 
   private final Class<T> type;
 
+  /**
+   * Constructs a new transform for the specified type.
+   *
+   * @param type the target type of the mapping from TableRow
+   */
   public MapTableRow(Class<T> type) {
     this.type = type;
   }
@@ -41,8 +60,7 @@ public class MapTableRow<T> extends PTransform<PCollection<TableRow>, PCollectio
       // https://stackoverflow.com/questions/32591914/making-transformations-in-dataflow-generic
       @Override
       public TypeDescriptor<T> getOutputTypeDescriptor() {
-        return new TypeDescriptor<T>(MapTableRow.this.getClass()) {
-        };
+        return new TypeDescriptor<T>(MapTableRow.this.getClass()) {};
       }
 
       @ProcessElement
@@ -52,7 +70,8 @@ public class MapTableRow<T> extends PTransform<PCollection<TableRow>, PCollectio
     }));
   }
 
-  public T map(TableRow row) {
+  @VisibleForTesting
+  T map(TableRow row) {
     try {
       return OBJECT_MAPPER.readValue(OBJECT_MAPPER.writeValueAsString(row), type);
     } catch (IOException e) {

@@ -13,6 +13,31 @@ import org.apache.beam.sdk.values.TypeDescriptor;
 
 import javax.annotation.Nonnull;
 
+/**
+ * Transformation that takes an object having fields or methods annotated with one or
+ * more {@link BigQueryColumn} annotations and writes those objects as rows in a
+ * BigQuery table.
+ * <p/>
+ * By default, the target BigQuery table will be replaced if it exists. This can be changed
+ * by calling the {@link #withWriteDisposition(BigQueryIO.Write.WriteDisposition)} method.
+ * <p/>
+ * Example usage:
+ * <pre>
+ * Pipeline p = Pipeline.create(options);
+ * ...
+ *
+ * PCollection&lt;MyObject> collection = p.apply(...);
+ * collection.apply(new BigQueryIOWriterTransform(options.getProject(),
+ *                                                options.getDataset(),
+ *                                                options.getTableName(),
+ *                                                MyObject.class));
+ * </pre>
+ *
+ * @param <T> the object type to serialize and write to BigQuery
+ * @see BigQueryColumn
+ * @see BigQueryTable#getSchemaForClass(Class)
+ */
+@SuppressWarnings("unused")
 public class BigQueryIOWriterTransform<T> extends PTransform<PCollection<T>, WriteResult> {
 
   private final ValueProvider<String> project;
@@ -69,14 +94,13 @@ public class BigQueryIOWriterTransform<T> extends PTransform<PCollection<T>, Wri
 
   @Override
   public WriteResult expand(PCollection<T> input) {
-    BigQueryTable<T> bigQueryTable = new BigQueryTable<>(type);
     BigQueryTableObjectConverter<T> converter = new BigQueryTableObjectConverter<>(type);
 
     return input.apply(MapElements.into(TypeDescriptor.of(TableRow.class))
                                   .via(converter::apply))
                 .apply(BigQueryIO.writeTableRows()
                                  .to(new TableSpecValueProvider(project, dataset, table))
-                                 .withSchema(bigQueryTable.inferSchema())
+                                 .withSchema(BigQueryTable.getSchemaForClass(type))
                                  .withCreateDisposition(createDisposition)
                                  .withWriteDisposition(writeDisposition));
   }
