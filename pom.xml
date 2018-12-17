@@ -22,7 +22,7 @@
   </licenses>
 
   <scm>
-    <url>https://github.com/WindfallData/beam-bigquery-annotations</url>
+    <url>https://github.com/WindfallData/beam-bigquery-annotations.git</url>
   </scm>
 
   <properties>
