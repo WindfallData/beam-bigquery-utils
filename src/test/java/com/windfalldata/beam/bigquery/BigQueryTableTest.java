@@ -93,11 +93,25 @@ class BigQueryTableTest {
     );
   }
 
+  @Test
+  @DisplayName("Tests throws exception if nested object record has no declared columns")
+  void testThrowsExceptionIfRecordHasNoFields() {
+    assertThrows(IllegalStateException.class,
+                 () -> BigQueryTable.getSchemaForClass(ClassWithInvalidNestedRecord.class));
+  }
+
   private List<TableFieldSchema> schema(Class x) {
     return getRecordFieldMetaListForType(x).stream()
                                            .map(RecordFieldMeta::asTableFieldSchema)
                                            .collect(Collectors.toList());
   }
 
+  private static class ClassWithInvalidNestedRecord {
+    @BigQueryColumn
+    private ClassWithNoAnnotations field;
+  }
 
+  private static class ClassWithNoAnnotations {
+    public String value;
+  }
 }

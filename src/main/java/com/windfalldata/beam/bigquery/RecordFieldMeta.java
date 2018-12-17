@@ -26,6 +26,11 @@ class RecordFieldMeta {
       schema.setMode(mode);
     }
     if (fields != null) {
+      if (fields.isEmpty()) {
+        throw new IllegalStateException("Field name \""+name+"\" of type RECORD has an empty schema. " +
+                                        "Does this object type have any BigQueryColumn annotated fields/methods?");
+      }
+
       schema.setFields(fields.stream().map(RecordFieldMeta::asTableFieldSchema).collect(toList()));
     }
 
