@@ -140,6 +140,15 @@ public class BigQueryTable<T> {
       }
     } else {
       meta.type = deriveType(type, column.convertTo()).getTypeName();
+      if (meta.type.equals(RECORD.getTypeName())) {
+        if (fn == null) {
+          // this is a recursive call to build the whole tree
+          meta.fields = getRecordFieldMetaListForType(type);
+        } else {
+          // this is not recursive and binds the parameterized type to the extraction function
+          meta.fn = fn.bindType(type);
+        }
+      }
     }
     return meta;
   }
@@ -163,8 +172,9 @@ public class BigQueryTable<T> {
       return STRING;
     } else if (LocalDate.class.isAssignableFrom(c)) {
       return DATE;
+    } else {
+      return RECORD;
     }
-    throw new IllegalStateException("Unsupported BigQuery column type " + c);
   }
 
   private static FieldType deriveConversionType(Class conversionTarget) {
