@@ -20,14 +20,14 @@ import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITI
 
 /**
  * Transformation that maps BigQuery {@link TableRow} objects into objects of the specified target type.
- * <p/>
+ * <br>
  * Example usage:
  * <pre>
  * Pipeline p = Pipeline.create(options);
  *
  * String bqQuery = ...;
- * PCollection&lt;MyObject> mappedObjects = p.apply(BigQueryIO.read().fromQuery(bqQuery))
- *                                        .apply(new MapTableRow&lt;MyObject>(MyObject.class) {});
+ * PCollection&lt;MyObject&gt; mappedObjects = p.apply(BigQueryIO.read().fromQuery(bqQuery))
+ *                                        .apply(new MapTableRow&lt;MyObject&gt;(MyObject.class) {});
  * </pre>
  * @param <T> the target type of the transformation
  */

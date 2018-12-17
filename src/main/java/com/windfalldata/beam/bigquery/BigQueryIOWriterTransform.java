@@ -17,16 +17,18 @@ import javax.annotation.Nonnull;
  * Transformation that takes an object having fields or methods annotated with one or
  * more {@link BigQueryColumn} annotations and writes those objects as rows in a
  * BigQuery table.
- * <p/>
+ * <p>
  * By default, the target BigQuery table will be replaced if it exists. This can be changed
  * by calling the {@link #withWriteDisposition(BigQueryIO.Write.WriteDisposition)} method.
- * <p/>
+ * </p>
+ * <p>
  * Example usage:
+ * </p>
  * <pre>
  * Pipeline p = Pipeline.create(options);
  * ...
  *
- * PCollection&lt;MyObject> collection = p.apply(...);
+ * PCollection&lt;MyObject&gt; collection = p.apply(...);
  * collection.apply(new BigQueryIOWriterTransform(options.getProject(),
  *                                                options.getDataset(),
  *                                                options.getTableName(),

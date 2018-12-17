@@ -28,12 +28,14 @@ public class BigQueryTable<T> {
 
   /**
    * Generates a {@link TableSchema} for the provided Class.
-   * <p/>
+   * <p>
    * The class should be annotated with one ore more {@link BigQueryColumn} annotations which will be used as
    * the columns in the schema for the table.
-   * <p/>
+   * </p>
+   * <p>
    * <em>NOTE:</em> it is an error to serialize an object (including nested objects within collections) that are
    * not annotated with at least one {@code BigQueryColumn}.
+   * </p>
    *
    * @see BigQueryColumn
    * @see BigQueryIOWriterTransform
