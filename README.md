@@ -74,4 +74,145 @@ Features of the annotation:
 * Conversions of values from String types to Doubles, Longs, or Booleans
 * Serialize to json within a column
 
+#### Examples
 
+A simple class:
+```
+Java Class:
+public class MyClass {
+  @BigQueryColumn(required=true) private String value;
+  @BigQueryColumn private long aNumber;
+  @BigQueryColumn private boolean aBoolean;
+}
+
+Schema:
+{
+  "fields":[
+    { "name":"value", "type": "STRING", "REQUIRED":true }, 
+    { "name":"aNumber", "type": "INTEGER" }, 
+    { "name":"aBoolean", "type": "BOOLEAN" }, 
+  ]
+}
+```
+
+Methods or Getters:
+```
+Java Class:
+public class MyClass {
+  private String value;
+  
+  @BigQueryColumn
+  public String getValue() { return value; }
+
+  @BigQueryColumn
+  public long aNumber() { return 42; } 
+}
+
+Schema:
+{ 
+  "fields": [
+    { "name":"value", "type": "STRING" }, 
+    { "name":"aNumber", "type": "INTEGER" } 
+  ]
+}
+```
+
+Documenting Columns:
+```
+Java Class:
+public class MyClass {
+  @BigQueryColumn(name="str_value", description="String value column") 
+  private String value;
+}
+
+Schema:
+{
+  "fields": [
+    { "name":"str_value", "type": "STRING", "description":"String value column" }
+  ]
+}
+```
+
+Simple Collections:
+```
+Java Class:
+public class MyClass {
+  
+  @BigQueryColumn(name="my_str_list", isSimpleCollection = true)
+  private List<String> list;
+  
+  @BigQueryColumn(name="my_int_list", isSimpleCollection = true)
+  private List<Integer> list2;
+}
+
+Schema:
+{
+  "fields": [
+    { "name":"my_str_list", "type":"STRING", mode:"REPEATED" }, 
+    { "name":"my_int_list", "type":"INTEGER", mode:"REPEATED" } 
+  ]
+}
+```
+
+Nested Objects and Collections:
+```
+Java Class:
+public class MyClass {
+  
+  @BigQueryColumn
+  private MyOtherClass other;
+  
+  @BigQueryColumn
+  private List<MyOtherClass> others;
+  
+  public static class MyOtherClass {
+    @BigQueryColumn
+    private String value;
+  }
+}
+
+Schema:
+{
+  "fields": [
+    { 
+      "name":"other", 
+      "type":"RECORD", 
+      "fields":[
+        { "name":"value", "type":"STRING" }
+      ]
+    },
+    { 
+      "name":"others",
+      "type":"RECORD",
+      "fields":[
+        { "name":"value", "type":"STRING" }
+      ],
+      "mode":"REPEATED"
+    }
+  ]
+}
+```
+
+Converting Columns to Other Types
+```
+Java Class:
+public class MyClass {
+  @BigQueryColumn(convertTo=Long.class)
+  private String myNumbers;
+  
+  @BigQueryColumn(convertToJson=true)
+  private List<Integer> jsonNumbers;
+  
+  @BigQueryColumn(convertToJson=true)
+  private List<SomeOtherClass> jsonRecordList;
+}
+
+Schema:
+{
+  "fields": [
+    { "name":"myNumbers", "type":"INTEGER" },
+    { "name":"jsonNumbers", "type":"STRING" },
+    { "name":"jsonRecordList", "type":"STRING" }
+  ]
+}
+```
