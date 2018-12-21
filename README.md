@@ -6,6 +6,20 @@ BigQuery within your Apache Beam pipeline.
 Requirements:
 * Java 1.8+
 * Apache Beam 2.x
+
+## Importing to Your Project
+
+Releases are published to [Maven Central](https://search.maven.org/search?q=a:beam-bigquery-utils).  
+
+Maven projects would simply add a dependency like so:
+
+```
+<dependency>
+  <groupId>com.windfalldata</groupId>
+  <artifactId>beam-bigquery-utils</artifactId>
+  <version>${version}</version>
+</dependency>
+``` 
  
 ## Transforming `TableRow`s
 
