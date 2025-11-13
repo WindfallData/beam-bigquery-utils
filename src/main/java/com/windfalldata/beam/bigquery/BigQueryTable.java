@@ -4,6 +4,9 @@ import com.google.api.services.bigquery.model.TableFieldSchema;
 import com.google.api.services.bigquery.model.TableSchema;
 import com.google.common.annotations.VisibleForTesting;
 import com.windfalldata.beam.bigquery.BigQueryColumnValueExtractor.ExtractionFunction;
+import org.apache.avro.LogicalTypes;
+import org.apache.avro.Schema;
+import org.apache.avro.specific.SpecificRecord;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
@@ -67,6 +70,11 @@ public class BigQueryTable<T> {
   }
 
   static List<RecordFieldMeta> getRecordFieldMetaListForType(Class<?> recordType) {
+    // Check if this is an Avro SpecificRecord type
+    if (SpecificRecord.class.isAssignableFrom(recordType)) {
+      return getRecordFieldMetaListFromAvroSchema(recordType);
+    }
+
     ArrayList<RecordFieldMeta> list = new ArrayList<>();
 
     while (recordType.getSuperclass() != null) {
@@ -87,6 +95,143 @@ public class BigQueryTable<T> {
     }
 
     return list;
+  }
+
+  /**
+   * Converts an Avro SpecificRecord schema to a list of RecordFieldMeta for BigQuery.
+   */
+  private static List<RecordFieldMeta> getRecordFieldMetaListFromAvroSchema(Class<?> avroType) {
+    try {
+      // Get the static SCHEMA$ field from the Avro-generated class
+      java.lang.reflect.Field schemaField = avroType.getField("SCHEMA$");
+      Schema schema = (Schema) schemaField.get(null);
+
+      ArrayList<RecordFieldMeta> list = new ArrayList<>();
+      for (Schema.Field avroField : schema.getFields()) {
+        list.add(convertAvroFieldToRecordFieldMeta(avroField));
+      }
+      return list;
+    } catch (Exception e) {
+      throw new IllegalStateException("Failed to extract Avro schema from type " + avroType.getName(), e);
+    }
+  }
+
+  /**
+   * Converts a single Avro field to RecordFieldMeta for BigQuery.
+   */
+  static RecordFieldMeta convertAvroFieldToRecordFieldMeta(Schema.Field avroField) {
+    RecordFieldMeta meta = new RecordFieldMeta();
+    meta.name = avroField.name();
+    meta.description = avroField.doc();
+
+    Schema fieldSchema = avroField.schema();
+
+    // Handle union types (e.g., ["null", "string"])
+    if (fieldSchema.getType() == Schema.Type.UNION) {
+      // Find the non-null type in the union (BigQuery doesn't support complex unions)
+      Schema nonNullSchema = null;
+      for (Schema unionType : fieldSchema.getTypes()) {
+        if (unionType.getType() != Schema.Type.NULL) {
+          if (nonNullSchema != null) {
+            throw new IllegalArgumentException(
+              "Field '" + avroField.name() + "' has a complex union with multiple non-null types. " +
+              "BigQuery only supports [null, type] unions for optional fields.");
+          }
+          nonNullSchema = unionType;
+        }
+      }
+      if (nonNullSchema != null) {
+        fieldSchema = nonNullSchema;
+      }
+      // Union types are nullable (NULLABLE is the default mode when not specified)
+      // meta.mode left as null, which BigQuery interprets as NULLABLE
+    } else {
+      // Non-union types are required in BigQuery
+      meta.mode = MODE_REQUIRED;
+    }
+
+    // Convert Avro type to BigQuery type
+    switch (fieldSchema.getType()) {
+      case STRING:
+      case ENUM:
+        meta.type = STRING.getTypeName();
+        break;
+      case INT:
+      case LONG:
+        // Check for logical types (date, timestamp, etc.)
+        if (fieldSchema.getLogicalType() != null) {
+          if (fieldSchema.getLogicalType() instanceof LogicalTypes.Date) {
+            meta.type = DATE.getTypeName();
+          } else if (fieldSchema.getLogicalType() instanceof LogicalTypes.TimestampMillis ||
+                     fieldSchema.getLogicalType() instanceof LogicalTypes.TimestampMicros) {
+            meta.type = "TIMESTAMP";
+          } else {
+            meta.type = INTEGER.getTypeName();
+          }
+        } else {
+          meta.type = INTEGER.getTypeName();
+        }
+        break;
+      case FLOAT:
+      case DOUBLE:
+        meta.type = FLOAT.getTypeName();
+        break;
+      case BOOLEAN:
+        meta.type = BOOLEAN.getTypeName();
+        break;
+      case BYTES:
+      case FIXED:
+        meta.type = "BYTES";
+        break;
+      case ARRAY:
+        meta.mode = MODE_REPEATED;
+        Schema elementType = fieldSchema.getElementType();
+        if (elementType.getType() == Schema.Type.RECORD) {
+          meta.type = RECORD.getTypeName();
+          meta.fields = new ArrayList<>();
+          for (Schema.Field nestedField : elementType.getFields()) {
+            meta.fields.add(convertAvroFieldToRecordFieldMeta(nestedField));
+          }
+        } else {
+          meta.type = convertAvroTypeToString(elementType);
+        }
+        break;
+      case RECORD:
+        meta.type = RECORD.getTypeName();
+        meta.fields = new ArrayList<>();
+        for (Schema.Field nestedField : fieldSchema.getFields()) {
+          meta.fields.add(convertAvroFieldToRecordFieldMeta(nestedField));
+        }
+        break;
+      default:
+        throw new IllegalArgumentException("Unsupported Avro type: " + fieldSchema.getType());
+    }
+
+    return meta;
+  }
+
+  /**
+   * Helper method to convert simple Avro types to BigQuery type strings.
+   */
+  private static String convertAvroTypeToString(Schema schema) {
+    switch (schema.getType()) {
+      case STRING:
+      case ENUM:
+        return STRING.getTypeName();
+      case INT:
+      case LONG:
+        return INTEGER.getTypeName();
+      case FLOAT:
+      case DOUBLE:
+        return FLOAT.getTypeName();
+      case BOOLEAN:
+        return BOOLEAN.getTypeName();
+      case BYTES:
+      case FIXED:
+        return "BYTES";
+      default:
+        throw new IllegalArgumentException("Unsupported Avro type: " + schema.getType());
+    }
   }
 
   static RecordFieldMeta getRecordFieldMeta(BigQueryColumn column, Field field, ExtractionFunction fn) {
