@@ -2,6 +2,8 @@ package com.windfalldata.beam.bigquery;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
+import org.apache.avro.Schema;
+import org.apache.avro.specific.SpecificRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,8 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static java.util.stream.Collectors.toList;
 
@@ -119,6 +123,61 @@ class BigQueryColumnValueExtractor {
 
       return s;
     }
+
+    // Handle Avro SpecificRecord types by extracting all fields recursively
+    if (value instanceof SpecificRecord) {
+      return extractAvroRecord((SpecificRecord) value);
+    }
+
+    return value;
+  }
+
+  /**
+   * Extracts all fields from an Avro SpecificRecord into a Map for BigQuery.
+   */
+  private Map<String, Object> extractAvroRecord(SpecificRecord record) {
+    Map<String, Object> result = new LinkedHashMap<>();
+    Schema schema = record.getSchema();
+
+    for (Schema.Field field : schema.getFields()) {
+      Object fieldValue = record.get(field.pos());
+      result.put(field.name(), convertAvroValue(fieldValue));
+    }
+
+    return result;
+  }
+
+  /**
+   * Recursively converts Avro values to BigQuery-compatible types.
+   */
+  private Object convertAvroValue(Object value) {
+    if (value == null) {
+      return null;
+    }
+
+    // Handle nested Avro records
+    if (value instanceof SpecificRecord) {
+      return extractAvroRecord((SpecificRecord) value);
+    }
+
+    // Handle collections/arrays
+    if (value instanceof Collection) {
+      return ((Collection<?>) value).stream()
+          .map(this::convertAvroValue)
+          .collect(toList());
+    }
+
+    // Handle LocalDate
+    if (value instanceof LocalDate) {
+      return ((LocalDate) value).toString();
+    }
+
+    // Handle Enums
+    if (value instanceof Enum) {
+      return ((Enum<?>) value).name();
+    }
+
+    // Primitives and strings pass through
     return value;
   }
 

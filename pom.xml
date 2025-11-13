@@ -6,7 +6,7 @@
 
   <groupId>com.windfalldata</groupId>
   <artifactId>beam-bigquery-utils</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
   <packaging>jar</packaging>
 
   <name>Apache Beam BigQuery Utils</name>
@@ -33,6 +33,7 @@
     <beam.version>2.9.0</beam.version>
     <apache.commons.lang.version>3.5</apache.commons.lang.version>
     <jackson.version>2.9.8</jackson.version>
+    <avro.version>1.11.3</avro.version>
     <junit.jupiter.version>5.3.2</junit.jupiter.version>
   </properties>
 
@@ -53,6 +54,13 @@
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
       <version>${apache.commons.lang.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
+      <version>${avro.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
